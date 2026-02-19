@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=smm_audit
+      - POSTGRES_USER=smm_user
+      - POSTGRES_PASSWORD=smm_password
+    restart: always
+
+  web:
+    build: .
+    command: gunicorn smm_audit.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://smm_user:smm_password@db:5432/smm_audit
+      - DJANGO_SETTINGS_MODULE=smm_audit.settings
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DEBUG=0
+    depends_on:
+      - db
+
+  bot:
+    build: .
+    command: /start_bot.sh
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgres://smm_user:smm_password@db:5432/smm_audit
+      - DJANGO_SETTINGS_MODULE=smm_audit.settings
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DEBUG=0
+    depends_on:
+      - db
+      - web # Wait for web to potentially run migrations, but better to handle migrations separately or in entrypoint
+
+volumes:
+  postgres_data:
