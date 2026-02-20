@@ -13,13 +13,6 @@ import logging
 class Command(BaseCommand):
     help = 'Runs the Telegram Bot'
 
-    def handle(self, *args, **options):
-        # Configure logging
-        logging.basicConfig(
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            level=logging.INFO
-        )
-
     def get_application(self):
         """Returns the application instance, building it if necessary."""
         return ApplicationBuilder().token(settings.TELEGRAM_BOT_TOKEN).build()
@@ -28,8 +21,9 @@ class Command(BaseCommand):
         # Configure logging
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            level=logging.INFO
+            level=logging.DEBUG
         )
+        logging.getLogger("httpx").setLevel(logging.WARNING)
 
         application = self.get_application()
         
